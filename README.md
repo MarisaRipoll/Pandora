@@ -26,9 +26,9 @@ Highly accurate and complex Question Answering models such as those presented on
 - [huggingface](https://huggingface.co/): offers open-source libraries (Most notable: Transformers Library)
 
 ## To-dos:
-- [] Literature Review of state-of-the-art tools, models and xAI-QA approaches.
-- [] Implement the HotpotQA dataset together with explainx.ai tools and the huggingface transformer library.
-- [] Implement xAI API (the output of explanations in a structured manner)
+- [ ] Literature Review of state-of-the-art tools, models and xAI-QA approaches.
+- [ ] Implement the HotpotQA dataset together with explainx.ai tools and the huggingface transformer library.
+- [ ] Implement xAI API (the output of explanations in a structured manner)
 
 ## Tests:
 - Evaluate the model statistics on different transformer models.
