@@ -16,7 +16,7 @@ Highly accurate and complex Question Answering models such as those presented on
 - [Other datasets for QA](https://analyticsindiamag.com/10-question-answering-datasets-to-build-robust-chatbot-systems/) 
 
 
-## Other explainable Question Answerin (xAI-QA) models:
+## Other explainable Question Answering (xAI-QA) models:
 - [Abujabal et al. 2017](https://www.aclweb.org/anthology/D17-2011.pdf) presents **QUINT**, a xAI-QA system that visualizes the complete derivation of the answer. Unsatisfactory answers return a proposal for reformulating the question.
 - [Thayaparan et al. Oct 2020](https://arxiv.org/pdf/2010.13128.pdf): This approach answers multiple choice questions and computes a weighted graph of relevant facts for each candidate answer. These facts offer plausible explanations from which the best one is outputed as the final answer.
 - [Asai et al 2020](https://arxiv.org/pdf/1911.10470.pdf) "*Learning to Retrieve Reasoning Paths over Wikipedia Graph for Question Answering*"
@@ -26,8 +26,9 @@ Highly accurate and complex Question Answering models such as those presented on
 - [huggingface](https://huggingface.co/): offers open-source libraries (Most notable: Transformers Library)
 
 ## To-dos:
-1) Implement the HotpotQA dataset together with explainx.ai tools and the huggingface transformer library.
-2) Implement xAI API
+- [] Literature Review of state-of-the-art tools, models and xAI-QA approaches.
+- [] Implement the HotpotQA dataset together with explainx.ai tools and the huggingface transformer library.
+- [] Implement xAI API (the output of explanations in a structured manner)
 
 ## Tests:
 - Evaluate the model statistics on different transformer models.
