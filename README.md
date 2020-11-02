@@ -1,7 +1,9 @@
 # Pandora
 Explainability in a Question Answering System.
 
-Highly accurate and complex models are seen as 
+Highly accurate and complex Question Answering models such as those presented on the huggingface transformers library are seen as uncomprehensible black boxes. Pandora deals with these black boxes and increases their interpretability by use of explainx.ai tools.
+
+(*Possible future implementation*: visualization of reasoning paths and graph derivation)
 
 
 ## Available Datasets:
