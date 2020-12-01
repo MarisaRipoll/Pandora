@@ -30,6 +30,6 @@ train_data, val_data = train_test_split(data, test_size = 0.2)
 train_contexts, train_questions, train_answers = read_file(train_data)
 val_contexts, val_questions, val_answers = read_file(val_data)
 
-tokenizer = LongformerTokenizer.from_pretrained('allenai/longformer-base-4096')
+tokenizer = LongformerTokenizerFast.from_pretrained('allenai/longformer-base-4096')
 train_encodings = tokenizer(train_contexts, train_questions, truncation=True, padding=True)
 val_encodings = tokenizer(val_contexts, val_questions, truncation=True, padding=True)
