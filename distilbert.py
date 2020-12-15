@@ -21,38 +21,8 @@ batch_size = 2
 verbose = True
 writer = SummaryWriter()
 
-print('We got this far')
-'''
-print('train_dataset[0]:', train_dataset[0])
-print('train_dataset[1]:', train_dataset[1])
-print('train_dataset[0][input_ids]:', train_dataset[0]['input_ids'])
-'''
-'''
-training_args = TrainingArguments(
-    output_dir='./results',          
-    num_train_epochs=3,              
-    per_device_train_batch_size=batch_size,  
-    per_device_eval_batch_size=batch_size,   
-    warmup_steps=500,                
-    weight_decay=0.01,               
-    logging_dir='./logs',
-    logging_steps=10,
-)
-
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_dataset,
-    eval_dataset=val_dataset
-)
-
-trainer.train()
-'''
-'''
-'''
 print('dataset type: ', type(train_dataset))
 print('len(dataset): ', len(train_dataset))
-
 
 model.to(device)
 model.train()
