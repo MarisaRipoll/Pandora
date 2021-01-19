@@ -158,7 +158,7 @@ def get_input_length(path):
     return positive_inputs    # , negative_inputs
 
 
-def create_frequency_of_input_lengths_graph(path, bar_region_size=200):
+def create_frequency_of_input_lengths_graph(path, bar_region_size=200, fsize=(15, 8)):
     '''This function is used to create a graph showing the length frequency (in characters) for
     all context + question input samples in the given dataset.
     
@@ -178,6 +178,7 @@ def create_frequency_of_input_lengths_graph(path, bar_region_size=200):
             if bar_region_size*i < length <= bar_region_size*i + bar_region_size:
                 samples_per_length[i] += 1
 
+    plt.figure(figsize=fsize)
     plt.bar(y_pos, samples_per_length, align='center', alpha=0.5)
     plt.xticks(y_pos, names, rotation=90)
     plt.ylabel('Frequency')
