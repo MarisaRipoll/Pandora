@@ -4,6 +4,7 @@ import json, torch
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
 from pathlib import Path
 from matplotlib import rc
@@ -184,3 +185,16 @@ def create_frequency_of_input_lengths_graph(path, bar_region_size=200):
     plt.title('Frequency of Input Lengths for SQUADv2')
 
     plt.show()
+
+
+def show_squad_dataset_info():
+    fig = go.Figure(data=[go.Table(columnwidth=[2, 1, 1, 1],
+                                   header=dict(values=['', 'Train', 'Dev', 'Test']),
+                                   cells=dict(values=[['Total examples',
+                                                       'Negative examples',
+                                                       'Total Articles',
+                                                       'Articles with negatives'],
+                                                      [130.319, 43.498, 442, 285], 
+                                                      [11.873, 5.945, 35, 35], 
+                                                      [8.862, 4.332, 28, 28]]))]) 
+    fig.show()
