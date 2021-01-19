@@ -3,6 +3,8 @@
 import json, torch
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+
 from pathlib import Path
 from matplotlib import rc
 from transformers import LongformerTokenizerFast, LongformerForQuestionAnswering
