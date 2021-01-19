@@ -16,7 +16,6 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cp
 path1 = 'data/squad/train-v2.0.json'
 path2 = 'data/squad/dev-v2.0.json'
 tokenizer = LongformerTokenizerFast.from_pretrained('allenai/longformer-base-4096')
-train_dataset, val_dataset = obtain_dataset(path1, path2, num_samples_train=800, num_samples_val=200)
 model = LongformerForQuestionAnswering.from_pretrained('allenai/longformer-base-4096')
 batch_size = 2
 verbose = True

@@ -12,10 +12,6 @@ from transformers import LongformerTokenizerFast, LongformerForQuestionAnswering
 from transformers import Trainer, TrainingArguments
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
-from transformers import DistilBertTokenizerFast, DistilBertForQuestionAnswering, AdamW
-
-
-tokenizer = LongformerTokenizerFast.from_pretrained('allenai/longformer-base-4096')
 
 def read_squad(path, num_samples=-1):
 
@@ -67,7 +63,7 @@ def add_end_idx(answers, contexts):
             answer['answer_end'] = end_idx - 2     # When the gold label is off by two characters
 
             
-def add_token_positions(encodings, answers):
+def add_token_positions(encodings, answers, tokenizer):
     start_positions = []
     end_positions = []
     for i in range(len(answers)):
@@ -91,42 +87,39 @@ class SquadDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.encodings.input_ids)
     
-def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20):
+def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20, verbose=False,
+                   tokenizer=LongformerTokenizerFast.from_pretrained('allenai/longformer-base-4096')):
     train_contexts, train_questions, train_answers = read_squad(path1, num_samples=num_samples_train)
     val_contexts, val_questions, val_answers = read_squad(path2, num_samples=num_samples_val)
     
-    print(f'len(train_questions): {len(train_questions)}')
-    print(f'len(train_contexts): {len(train_contexts)}')
-    print(f'len(train_answers): {len(train_answers)}\n')
+    if verbose==True:
+        print(f'len(train_questions): {len(train_questions)}')
+        print(f'len(train_contexts): {len(train_contexts)}')
+        print(f'len(train_answers): {len(train_answers)}\n')
     
-    print(f'len(val_questions): {len(val_questions)}')
-    print(f'len(val_contexts): {len(val_contexts)}')
-    print(f'len(val_answers): {len(val_answers)}\n')
+        print(f'len(val_questions): {len(val_questions)}')
+        print(f'len(val_contexts): {len(val_contexts)}')
+        print(f'len(val_answers): {len(val_answers)}\n')
     
-    print('now add_end_idx')
+        print('now add_end_idx')
     add_end_idx(train_answers, train_contexts)
     add_end_idx(val_answers, val_contexts)
     
     train_encodings = tokenizer(train_contexts, train_questions, truncation=True, padding=True)
     val_encodings = tokenizer(val_contexts, val_questions, truncation=True, padding=True)
     
-    add_token_positions(train_encodings, train_answers)
-    add_token_positions(val_encodings, val_answers)
+    add_token_positions(train_encodings, train_answers, tokenizer)
+    add_token_positions(val_encodings, val_answers, tokenizer)
     
-    print('obtaining data')
+    if verbose==True: print('obtaining data')
     train_data = SquadDataset(train_encodings)
     val_data = SquadDataset(val_encodings)
     train_percentage = num_samples_train/len(train_data)
     val_percentage = num_samples_val/len(val_data)
     
-    #print('train_data[0]:', train_data[0])
-    #print('train_data[1]:', train_data[1])
-    
-    print('split dataset')
+    if verbose==True: print('split dataset')
     train_dataset = train_data
     val_dataset = val_data
-    #train_dataset = train_test_split(train_data, test_size=train_percentage)
-    #val_dataset = train_test_split(val_data, test_size=val_percentage)
     
     return train_dataset, val_dataset
 
@@ -158,7 +151,7 @@ def get_input_length(path):
     return positive_inputs    # , negative_inputs
 
 
-def create_frequency_of_input_lengths_graph(path, bar_region_size=200, fsize=(15, 8)):
+def create_frequency_of_input_lengths_graph(path, bar_region_size=200, fsize=(15, 8), show_max_length=False):
     '''This function is used to create a graph showing the length frequency (in characters) for
     all context + question input samples in the given dataset.
     
@@ -167,6 +160,9 @@ def create_frequency_of_input_lengths_graph(path, bar_region_size=200, fsize=(15
     '''
     inputs = get_input_length(path)
     inputs = sorted(inputs)
+    if show_max_length==True:
+        print('The longest input character length is of: ', inputs[-1])
+        print('This corresponds to an average of {0} tokens'.format(inputs[-1]/4))
     len_names = inputs[-2]//bar_region_size
     if inputs[-2]%bar_region_size != 0: len_names += 1
     names = [int(bar_region_size*i + bar_region_size/2) for i in range(len_names)]
