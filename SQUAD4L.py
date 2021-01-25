@@ -14,13 +14,15 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
 
-def data_reader(path, num_samples=-1, verbose=False, verbose_limit=5):
+def data_reader(path, num_samples=-1, mode='train', verbose=False, verbose_limit=5):
 
     '''This function reads the dataset: SQUADv2
     
     Args:
             path (str): json file with data
             num_samples (int): number of samples to use from dataset. If set to -1 use all.
+            mode (string): mode can be 'train', 'eval' or 'all'. And it controls the number  
+                           and type of variables that the function returns.
             verbose (bool): gives extra information about the sample contents and structure.
             verbose_limit (int): max number of samples for which verbose remains True.
     '''
@@ -30,32 +32,85 @@ def data_reader(path, num_samples=-1, verbose=False, verbose_limit=5):
         print('WARNING: num_samples in data_reader exceeds the verbose_limit. Verbose will be reset to False')
          
     path = Path(path)
-    with open(path, 'rb') as f: data = json.load(f)
+    with open(path, 'rb') as f: dataset = json.load(f)
 
+    # For training we need contexts, questions and answers:
     contexts = []
     questions = []
     answers = []
-    #count = 0
+
+    # For evaluation we need id, answers and answers[answer_starts]
+    ids = []
+    answer_starts = []
+    answer_ends = []
+    answer_texts = []
+
+    # Extra information we could need (the rest of the metadata)
+    titles = []
+    negatives = []
+    count = 0
 
     if verbose == True:
-        pprint.PrettyPrinter(indent=1, compact=True).pprint(data)
-        pprint.PrettyPrinter(indent=1, compact=True).pprint(data['data'])
+        print('Dataset version: ', dataset['version'])
+        print('data length: ', len(dataset['data']))
+        for i, dict_key in enumerate(dataset['data']):
+            print(dict_key)
+            break
+        #pprint.PrettyPrinter(indent=1, compact=True).pprint(data)
+        #pprint.PrettyPrinter(indent=1, compact=True).pprint(data['data'][0])
 
-    for paragraphs in data['data']:
-        for passage in paragraphs['paragraphs']:
-            #print('count: ', count)
-            context = passage['context']
-            for qa in passage['qas']:
+    for data in dataset['data']:
+        document_title = data['title']
+        for paragraph in data['paragraphs']:
+            context = paragraph['context']
+            for qa in paragraph['qas']:
                 question = qa['question']
+                sample_id = qa['id']
+                negative = qa['is_impossible']
                 for answer in qa['answers']:
+                    # One question may have different answers and each of them counts as a separate sample.
+                    # Therefore the limit number of samples is checked here.
                     if count >= num_samples and num_samples != -1:
                         break
                     count = count + 1
+                    answer_start = answer['answer_start']
+                    text = answer['text']
+
+                    titles.append(document_title)
                     contexts.append(context)
                     questions.append(question)
                     answers.append(answer)
+                    ids.append(sample_id)
+                    answer_texts.append(text)
+                    negatives.append(negative)
+                    
+                    # Before we add answer_starts lets make sure there are no errors.
+                    # (Squad answers are sometimes off by a few characters.)
+                    # In doing so we can also add answer_ends to the metadata :D
+                    answer_end = answer_start + len(text)
+                    if context[answer_start:answer_end] == text:
+                        answer_starts.append(answer_start)
+                        answer_ends.append(answer_end)
+                    elif context[answer_start-1:answer_end-1] == text: 
+                        answer_starts.append(answer_start-1)
+                        answer_ends.append(answer_end-1)
+                    elif context[answer_start-2:answer_end-2] == text: 
+                        answer_starts.append(answer_start-2)
+                        answer_ends.append(answer_end-2)
+                    else:
+                        print('ERROR: SQUAD Answer does not match idxs')
+                        answer_starts.append(answer_start)
+                        answer_ends.append(answer_start)
 
-    return contexts, questions, answers
+
+    if mode=='train':
+        return contexts, questions, answers
+    elif mode=='eval':
+        return contexts, questions, ids, answer_starts, answer_ends, answer_texts
+    elif mode=='all':
+        return contexts, questions, answers, ids, answer_starts, answer_ends, answer_texts, negatives, titles
+    else:
+        print('ERROR: incorrect mode chosen!')
 
 
 def add_end_idx(answers, contexts):
@@ -207,3 +262,4 @@ def show_squad_dataset_info():
                                                       [11.873, 5.945, 35, 35], 
                                                       [8.862, 4.332, 28, 28]]))]) 
     fig.show()
+
