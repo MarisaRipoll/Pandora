@@ -13,24 +13,36 @@ from transformers import Trainer, TrainingArguments
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
-def read_squad(path, num_samples=-1):
 
-    '''This function reads the squad dataset
+def data_reader(path, num_samples=-1, verbose=False, verbose_limit=5):
+
+    '''This function reads the dataset: SQUADv2
     
     Args:
             path (str): json file with data
             num_samples (int): number of samples to use from dataset. If set to -1 use all.
+            verbose (bool): gives extra information about the sample contents and structure.
+            verbose_limit (int): max number of samples for which verbose remains True.
     '''
+    # For readability's sake and to avoid wasting time and resources with excessive printing,
+    # we set a maximum number of lines for which verbose remains true -> verbose_limit.
+    if verbose == True and (num_samples > verbose_limit or num_samples==-1):
+        print('WARNING: num_samples in data_reader exceeds the verbose_limit. Verbose will be reset to False')
+         
     path = Path(path)
-    with open(path, 'rb') as f:
-        squad_dict = json.load(f)
+    with open(path, 'rb') as f: data = json.load(f)
 
     contexts = []
     questions = []
     answers = []
-    count = 0
-    for group in squad_dict['data']:
-        for passage in group['paragraphs']:
+    #count = 0
+
+    if verbose == True:
+        pprint.PrettyPrinter(indent=1, compact=True).pprint(data)
+        pprint.PrettyPrinter(indent=1, compact=True).pprint(data['data'])
+
+    for paragraphs in data['data']:
+        for passage in paragraphs['paragraphs']:
             #print('count: ', count)
             context = passage['context']
             for qa in passage['qas']:
@@ -89,8 +101,8 @@ class SquadDataset(torch.utils.data.Dataset):
     
 def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20, verbose=False,
                    tokenizer=LongformerTokenizerFast.from_pretrained('allenai/longformer-base-4096')):
-    train_contexts, train_questions, train_answers = read_squad(path1, num_samples=num_samples_train)
-    val_contexts, val_questions, val_answers = read_squad(path2, num_samples=num_samples_val)
+    train_contexts, train_questions, train_answers = data_reader(path1, num_samples=num_samples_train)
+    val_contexts, val_questions, val_answers = data_reader(path2, num_samples=num_samples_val)
     
     if verbose==True:
         print(f'len(train_questions): {len(train_questions)}')
