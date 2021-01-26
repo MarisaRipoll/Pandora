@@ -267,7 +267,7 @@ def show_squad_dataset_info():
 def likeliest_predictions(start, end, input_ids, n=5):
     start  = start.detach().cpu().tolist()[0] # covert to one dimensional list
     end    = end.detach().cpu().tolist()[0]   # covert to one dimensional list
-    inputs = to_list([input_ids])[0]
+    inputs = input_ids.detach().cpu().tolist()[0]
 
     start_idx = [i for i, logit in sorted(enumerate(start), key=lambda x: x[1], reverse=True)[:n]]
     end_idx = [i for i, logit in sorted(enumerate(end), key=lambda x: x[1], reverse=True)[:n]]
