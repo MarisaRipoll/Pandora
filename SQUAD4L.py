@@ -1,6 +1,7 @@
 # https://huggingface.co/transformers/master/custom_datasets.html
 
 import json, torch, pprint
+import string, collections, re
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -16,7 +17,8 @@ from torch.utils.data import DataLoader
 
 def data_reader(path, num_samples=-1, mode='train', verbose=False, verbose_limit=5):
 
-    '''This function reads the dataset: SQUADv2
+    '''This function reads the dataset: SQUADv2 and obtains the significant information from
+    sample structure. It returns 
     
     Args:
             path (str): json file with data
@@ -106,7 +108,7 @@ def data_reader(path, num_samples=-1, mode='train', verbose=False, verbose_limit
     if mode=='train':
         return contexts, questions, answers
     elif mode=='eval':
-        return contexts, questions, ids, answer_starts, answer_ends, answer_texts
+        return contexts, questions, answers, answer_texts
     elif mode=='all':
         return contexts, questions, answers, ids, answer_starts, answer_ends, answer_texts, negatives, titles
     else:
@@ -157,8 +159,8 @@ class SquadDataset(torch.utils.data.Dataset):
 def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20, verbose=False,
                    tokenizer=LongformerTokenizerFast.from_pretrained('allenai/longformer-base-4096')):
     train_contexts, train_questions, train_answers = data_reader(path1, num_samples=num_samples_train)
-    val_contexts, val_questions, val_answers = data_reader(path2, num_samples=num_samples_val)
-    
+    val_contexts, val_questions, val_answers, val_answer_texts = data_reader(path2, num_samples=num_samples_val, mode='eval')
+
     if verbose==True:
         print(f'len(train_questions): {len(train_questions)}')
         print(f'len(train_contexts): {len(train_contexts)}')
@@ -263,44 +265,83 @@ def show_squad_dataset_info():
                                                       [8.862, 4.332, 28, 28]]))]) 
     fig.show()
 
+# The eval and metric functions are heavily influenced by the code in: 
+# https://qa.fastforwardlabs.com/no%20answer/null%20threshold/bert/distilbert/exact%20match/f1/robust%20predictions/2020/06/09/Evaluating_BERT_on_SQuAD.html
 
-def likeliest_predictions(start, end, input_ids, n=5):
+def likeliest_predictions(start, end, input_ids, tokenizer, n=5):
     start  = start.detach().cpu().tolist()[0] # covert to one dimensional list
     end    = end.detach().cpu().tolist()[0]   # covert to one dimensional list
     inputs = input_ids.detach().cpu().tolist()[0]
 
     start_idx = [i for i, logit in sorted(enumerate(start), key=lambda x: x[1], reverse=True)[:n]]
     end_idx = [i for i, logit in sorted(enumerate(end), key=lambda x: x[1], reverse=True)[:n]]
-    qidx = [i+1 for i, input in enumerate(inputs[inputs.index(101):inputs.index(102)])]
 
-  	# This chunk of code is taken from:
-    # https://qa.fastforwardlabs.com/no%20answer/null%20threshold/bert/distilbert/exact%20match/f1/robust%20predictions/2020/06/09/Evaluating_BERT_on_SQuAD.html
     PrelimPrediction = collections.namedtuple("PrelimPrediction", ["start_idx", "end_idx", "start_logit", "end_logit"])
     BestPrediction = collections.namedtuple("BestPrediction", ["text", "start_logit", "end_logit"])
     prelim_preds = []
     nbest = []
     seen_preds = []
-    for start_index in start_indexes:
-        for end_index in end_indexes:
-            # throw out invalid predictions
-            if (start_index in qidx) and (end_index in qidx): continue
-            if end_idx < start_idx: continue
-            prelim_preds.append(PrelimPrediction(start_idx = start_idx, end_idx = end_idx,
-                                                 start_logit = start[start_idx], end_logit = end[end_idx]))
+    for start_index in start_idx:
+        for end_index in end_idx:
+            if end_index < start_index: continue
+            prelim_preds.append(PrelimPrediction(start_idx = start_index, end_idx = end_index,
+                                                 start_logit = start[start_index], end_logit = end[end_index]))
     prelim_preds = sorted(prelim_preds, key=lambda x: (x.start_logit + x.end_logit), reverse=True)
     for pred in prelim_preds:
         if len(nbest) >= n: break
         if pred.start_idx > 0: # non-null answers have start_idx > 0
-            text = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(tokens[pred.start_index:pred.end_index+1]))
-            # clean whitespace
+            text = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs[pred.start_idx:pred.end_idx+1]))
             text = text.strip()
             text = " ".join(text.split())
             if text in seen_preds:continue
-            seen_preds.append(text)  # flag this text as being seen -- if we see it again, don't add it to the nbest list
-            # add this text prediction to a pruned list of the top n best predictions
+            seen_preds.append(text)
             nbest.append(BestPrediction(text=text, start_logit=pred.start_logit, end_logit=pred.end_logit))
-    nbest.append(BestPrediction(text="", start_logit=start_logits[0], end_logit=end_logits[0])) # Include null answer.
+    nbest.append(BestPrediction(text="", start_logit=start[0], end_logit=end[0])) # Include null answer.
     # compute the difference between the null score and the best non-null score
-    score_diff = start_logits[0] + end_logits[0] - nbest[0].start_logit - nbest[0].end_logit
-    # Chunk goes until here.
+    score_diff = start[0] + end[0] - nbest[0].start_logit - nbest[0].end_logit
     return score_diff, nbest
+
+
+def em_metric(prediction, target):
+    # Punctuation, case, space and article normalization
+    prediction = prediction.lower()
+    prediction = "".join(char for char in prediction if char not in set(string.punctuation))
+    prediction = re.sub(re.compile(r"\b(a|an|the)\b", re.UNICODE), " ", prediction)
+    prediction = " ".join(prediction.split())
+
+    # Punctuation, case, space and article normalization   
+    target = target.lower() 
+    target = "".join(char for char in target if char not in set(string.punctuation))
+    target = re.sub(re.compile(r"\b(a|an|the)\b", re.UNICODE), " ", target)
+    target = " ".join(target.split())
+
+    # Check if prediction and targets is the same:
+    if prediction == target: return 1
+    else: return 0
+
+def f1_metric(prediction, target):
+    # Punctuation, case, space and article normalization
+    prediction = prediction.lower()
+    prediction = "".join(char for char in prediction if char not in set(string.punctuation))
+    prediction = re.sub(re.compile(r"\b(a|an|the)\b", re.UNICODE), " ", prediction)
+    prediction = " ".join(prediction.split())
+    prediction_tokens = prediction.split()
+
+    # Punctuation, case, space and article normalization    
+    target = target.lower() 
+    target = "".join(char for char in target if char not in set(string.punctuation))
+    target = re.sub(re.compile(r"\b(a|an|the)\b", re.UNICODE), " ", target)
+    target = " ".join(target.split())
+    target_tokens = target.split()
+
+    if len(prediction_tokens) == 0 or len(target_tokens) == 0:
+        if prediction_tokens == target_tokens: return 1
+        else: return 0
+    
+    common_tokens = set(prediction_tokens) & set(target_tokens)
+    if len(common_tokens) == 0: return 0  # None of the tokens are shared between target and prediction --> f1=0
+     
+    precision = len(common_tokens) / len(prediction_tokens)
+    recall = len(common_tokens) / len(target_tokens)
+    f1_score = 2 * (precision * recall) / (precision + recall)
+    return f1_score
