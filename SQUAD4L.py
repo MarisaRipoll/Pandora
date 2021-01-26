@@ -263,3 +263,44 @@ def show_squad_dataset_info():
                                                       [8.862, 4.332, 28, 28]]))]) 
     fig.show()
 
+
+def likeliest_predictions(start, end, input_ids, n=5):
+    start  = start.detach().cpu().tolist()[0] # covert to one dimensional list
+    end    = end.detach().cpu().tolist()[0]   # covert to one dimensional list
+    inputs = to_list([input_ids])[0]
+
+    start_idx = [i for i, logit in sorted(enumerate(start), key=lambda x: x[1], reverse=True)[:n]]
+    end_idx = [i for i, logit in sorted(enumerate(end), key=lambda x: x[1], reverse=True)[:n]]
+    qidx = [i+1 for i, input in enumerate(inputs[inputs.index(101):inputs.index(102)])]
+
+  	# This chunk of code is taken from:
+    # https://qa.fastforwardlabs.com/no%20answer/null%20threshold/bert/distilbert/exact%20match/f1/robust%20predictions/2020/06/09/Evaluating_BERT_on_SQuAD.html
+    PrelimPrediction = collections.namedtuple("PrelimPrediction", ["start_idx", "end_idx", "start_logit", "end_logit"])
+    BestPrediction = collections.namedtuple("BestPrediction", ["text", "start_logit", "end_logit"])
+    prelim_preds = []
+    nbest = []
+    seen_preds = []
+    for start_index in start_indexes:
+        for end_index in end_indexes:
+            # throw out invalid predictions
+            if (start_index in qidx) and (end_index in qidx): continue
+            if end_idx < start_idx: continue
+            prelim_preds.append(PrelimPrediction(start_idx = start_idx, end_idx = end_idx,
+                                                 start_logit = start[start_idx], end_logit = end[end_idx]))
+    prelim_preds = sorted(prelim_preds, key=lambda x: (x.start_logit + x.end_logit), reverse=True)
+    for pred in prelim_preds:
+        if len(nbest) >= n: break
+        if pred.start_idx > 0: # non-null answers have start_idx > 0
+            text = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(tokens[pred.start_index:pred.end_index+1]))
+            # clean whitespace
+            text = text.strip()
+            text = " ".join(text.split())
+            if text in seen_preds:continue
+            seen_preds.append(text)  # flag this text as being seen -- if we see it again, don't add it to the nbest list
+            # add this text prediction to a pruned list of the top n best predictions
+            nbest.append(BestPrediction(text=text, start_logit=pred.start_logit, end_logit=pred.end_logit))
+    nbest.append(BestPrediction(text="", start_logit=start_logits[0], end_logit=end_logits[0])) # Include null answer.
+    # compute the difference between the null score and the best non-null score
+    score_diff = start_logits[0] + end_logits[0] - nbest[0].start_logit - nbest[0].end_logit
+    # Chunk goes until here.
+    return score_diff, nbest
