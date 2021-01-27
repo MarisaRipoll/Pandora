@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 #from datasets.squad_v2 import squad
-from transformers import LongformerTokenizerFast, LongformerForQuestionAnswering, AdamW
+from transformers import LongformerTokenizerFast, LongformerForQuestionAnswering, AdamW, Adafactor
 from transformers import Trainer, TrainingArguments
 from SQUAD4L import obtain_dataset
 from datetime import datetime
