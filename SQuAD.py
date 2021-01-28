@@ -123,3 +123,77 @@ def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20):
     #val_dataset = train_test_split(val_data, test_size=val_percentage)
     
     return train_dataset, val_dataset
+
+
+def get_input_length(path):
+
+    '''This function computes the length in characters of all context+question input samples.
+    It is a helper function for create_frequency_of_input_lengths_graph()
+    
+    Args:
+            path (str): json file with data
+    '''
+    with open(path, 'rb') as f:
+        squad_dict = json.load(f)
+    positive_inputs = []
+    # negative_inputs = []
+    count = 0
+    for group in squad_dict['data']:
+        for passage in group['paragraphs']:
+            context = passage['context']
+            len_context = len(context)
+            for qa in passage['qas']:
+                len_question = len(qa['question'])
+                positive_inputs.append(len_context + len_question)
+                ####### TODO: negative examples - stack them in a bar chart with a separate color. 
+                #negative_inputs.append(len_context + len_question)
+                #for answer in qa['answers']:
+                #    inputs.append(len_context + len_question)
+    return positive_inputs    # , negative_inputs
+
+
+def create_frequency_of_input_lengths_graph(path, bar_region_size=200, fsize=(15, 8), show_max_length=False):
+    '''This function is used to create a graph showing the length frequency (in characters) for
+    all context + question input samples in the given dataset.
+    
+    Args:
+            path (str): json file with data
+    '''
+    inputs = get_input_length(path)
+    inputs = sorted(inputs)
+    if show_max_length==True:
+        print('The longest input character length is of: ', inputs[-1])
+        print('This corresponds to an average of {0} tokens'.format(inputs[-1]/4))
+    len_names = inputs[-2]//bar_region_size
+    if inputs[-2]%bar_region_size != 0: len_names += 1
+    names = [int(bar_region_size*i + bar_region_size/2) for i in range(len_names)]
+    samples_per_length = [0] * len(names)
+    y_pos = np.arange(len(names))
+
+    for length in inputs:
+        for i in range(len(names)):
+            if bar_region_size*i < length <= bar_region_size*i + bar_region_size:
+                samples_per_length[i] += 1
+
+    plt.figure(figsize=fsize)
+    plt.bar(y_pos, samples_per_length, align='center', alpha=0.5)
+    plt.xticks(y_pos, names, rotation=90)
+    plt.ylabel('Frequency')
+    plt.xlabel('Length of Input Characters (Context + Question)')
+    plt.title('Frequency of Input Lengths for SQUADv2')
+
+    plt.show()
+
+
+def show_squad_dataset_info():
+    fig = go.Figure(data=[go.Table(columnwidth=[2, 1, 1, 1],
+                                   header=dict(values=['', 'Train', 'Dev', 'Test']),
+                                   cells=dict(values=[['Total examples',
+                                                       'Negative examples',
+                                                       'Total Articles',
+                                                       'Articles with negatives'],
+                                                      [130.319, 43.498, 442, 285], 
+                                                      [11.873, 5.945, 35, 35], 
+                                                      [8.862, 4.332, 28, 28]]))]) 
+    fig.show()
+
