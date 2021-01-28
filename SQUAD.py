@@ -76,8 +76,9 @@ def add_token_positions(encodings, answers):
             end_positions[-1] = tokenizer.model_max_length
     encodings.update({'start_positions': start_positions, 'end_positions': end_positions})
 
-    
-class SquadDataset(torch.utils.data.Dataset):
+# Inherents from pytorch's Dataset module: https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset  
+# As done by: https://huggingface.co/transformers/custom_datasets.html
+class Dataset(torch.utils.data.Dataset):
     def __init__(self, encodings):
         self.encodings = encodings
 
@@ -110,8 +111,8 @@ def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20):
     add_token_positions(val_encodings, val_answers)
     
     print('obtaining data')
-    train_data = SquadDataset(train_encodings)
-    val_data = SquadDataset(val_encodings)
+    train_data = Dataset(train_encodings)
+    val_data = Dataset(val_encodings)
     train_percentage = num_samples_train/len(train_data)
     val_percentage = num_samples_val/len(val_data)
     

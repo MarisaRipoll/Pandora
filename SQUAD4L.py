@@ -40,8 +40,6 @@ def data_reader(path, num_samples=-1, mode='train', verbose=False, verbose_limit
 
     # For evaluation we need id, answers and answers[answer_starts]
     ids = []
-    answer_starts = []
-    answer_ends = []
     answer_texts = []
 
     # Extra information we could need (the rest of the metadata)
@@ -78,7 +76,6 @@ def data_reader(path, num_samples=-1, mode='train', verbose=False, verbose_limit
                     titles.append(document_title)
                     contexts.append(context)
                     questions.append(question)
-                    answers.append(answer)
                     ids.append(sample_id)
                     answer_texts.append(text)
                     negatives.append(negative)
@@ -88,30 +85,33 @@ def data_reader(path, num_samples=-1, mode='train', verbose=False, verbose_limit
                     # In doing so we can also add answer_ends to the metadata :D
                     answer_end = answer_start + len(text)
                     if context[answer_start:answer_end] == text:
-                        answer_starts.append(answer_start)
-                        answer_ends.append(answer_end)
+                        print('worked')
+                        answer['answer_end'] = answer_end
                     elif context[answer_start-1:answer_end-1] == text: 
-                        answer_starts.append(answer_start-1)
-                        answer_ends.append(answer_end-1)
+                        print('worked')
+                        answer['answer_start'] = answer_start - 1
+                        answer['answer_end'] = answer_end - 1
                     elif context[answer_start-2:answer_end-2] == text: 
-                        answer_starts.append(answer_start-2)
-                        answer_ends.append(answer_end-2)
+                        print('worked')
+                        answer['answer_start'] = answer_start - 2
+                        answer['answer_end'] = answer_end - 2
                     else:
                         print('ERROR: SQUAD Answer does not match idxs')
                         answer_starts.append(answer_start)
                         answer_ends.append(answer_start)
 
+                    answers.append(answer)
 
     if mode=='train':
         return contexts, questions, answers
     elif mode=='eval':
         return contexts, questions, answers, answer_texts
     elif mode=='all':
-        return contexts, questions, answers, ids, answer_starts, answer_ends, answer_texts, negatives, titles
+        return contexts, questions, answers, ids, answer_texts, negatives, titles
     else:
         print('ERROR: incorrect mode chosen!')
 
-
+# This function is taken from https://huggingface.co/docs/datasets/master/loading_datasets.html
 def add_end_idx(answers, contexts):
     for answer, context in zip(answers, contexts):
         gold_text = answer['text']
@@ -128,7 +128,7 @@ def add_end_idx(answers, contexts):
             answer['answer_start'] = start_idx - 2
             answer['answer_end'] = end_idx - 2     # When the gold label is off by two characters
 
-            
+# This function is taken from https://huggingface.co/docs/datasets/master/loading_datasets.html
 def add_token_positions(encodings, answers, tokenizer):
     start_positions = []
     end_positions = []
@@ -142,8 +142,8 @@ def add_token_positions(encodings, answers, tokenizer):
             end_positions[-1] = tokenizer.model_max_length
     encodings.update({'start_positions': start_positions, 'end_positions': end_positions})
 
-    
-class SquadDataset(torch.utils.data.Dataset):
+# Inherents from pytorch's Dataset module: https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset  
+# As done by: https://huggingface.co/transformers/custom_datasets.htmlclass Dataset(torch.utils.data.Dataset):
     def __init__(self, encodings):
         self.encodings = encodings
 
@@ -168,8 +168,8 @@ def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20, verbo
         print(f'len(val_answers): {len(val_answers)}\n')
     
         print('now add_end_idx')
-    add_end_idx(train_answers, train_contexts)
-    add_end_idx(val_answers, val_contexts)
+    #add_end_idx(train_answers, train_contexts)
+    #add_end_idx(val_answers, val_contexts)
     
     train_encodings = tokenizer(train_contexts, train_questions, truncation=True, padding=True)
     val_encodings = tokenizer(val_contexts, val_questions, truncation=True, padding=True)
@@ -178,8 +178,8 @@ def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20, verbo
     add_token_positions(val_encodings, val_answers, tokenizer)
     
     if verbose==True: print('obtaining data')
-    train_data = SquadDataset(train_encodings)
-    val_data = SquadDataset(val_encodings)
+    train_data = Dataset(train_encodings)
+    val_data = Dataset(val_encodings)
     train_percentage = num_samples_train/len(train_data)
     val_percentage = num_samples_val/len(val_data)
     
