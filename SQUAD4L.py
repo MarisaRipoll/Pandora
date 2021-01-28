@@ -1,5 +1,3 @@
-# https://huggingface.co/transformers/master/custom_datasets.html
-
 import json, torch, pprint
 import string, collections, re
 import numpy as np
@@ -10,7 +8,6 @@ import plotly.graph_objects as go
 from pathlib import Path
 from matplotlib import rc
 from transformers import LongformerTokenizerFast, LongformerForQuestionAnswering
-from transformers import Trainer, TrainingArguments
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 

@@ -1,13 +1,15 @@
-# https://huggingface.co/transformers/master/custom_datasets.html
+import json, torch, pprint
+import string, collections, re
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 
-import json, torch
 from pathlib import Path
+from matplotlib import rc
 from transformers import LongformerTokenizerFast, LongformerForQuestionAnswering
-from transformers import Trainer, TrainingArguments
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
-from transformers import DistilBertTokenizerFast, DistilBertForQuestionAnswering, AdamW
-
 
 tokenizer = DistilBertTokenizerFast.from_pretrained('distilbert-base-uncased')
 
