@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 
 from pathlib import Path
 from matplotlib import rc
-from transformers import LongformerTokenizerFast, LongformerForQuestionAnswering
+from transformers import LongformerTokenizerFast
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 
@@ -85,14 +85,11 @@ def data_reader(path, num_samples=-1, mode='train', verbose=False, verbose_limit
                     # In doing so we can also add answer_ends to the metadata :D
                     answer_end = answer_start + len(text)
                     if context[answer_start:answer_end] == text:
-                        print('worked')
                         answer['answer_end'] = answer_end
                     elif context[answer_start-1:answer_end-1] == text: 
-                        print('worked')
                         answer['answer_start'] = answer_start - 1
                         answer['answer_end'] = answer_end - 1
                     elif context[answer_start-2:answer_end-2] == text: 
-                        print('worked')
                         answer['answer_start'] = answer_start - 2
                         answer['answer_end'] = answer_end - 2
                     else:
@@ -110,25 +107,8 @@ def data_reader(path, num_samples=-1, mode='train', verbose=False, verbose_limit
         return contexts, questions, answers, ids, answer_texts, negatives, titles
     else:
         print('ERROR: incorrect mode chosen!')
-"""
-# This function is taken from https://huggingface.co/docs/datasets/master/loading_datasets.html
-def add_end_idx(answers, contexts):
-    for answer, context in zip(answers, contexts):
-        gold_text = answer['text']
-        start_idx = answer['answer_start']
-        end_idx = start_idx + len(gold_text)
 
-        # sometimes squad answers are off by a character or two – fix this
-        if context[start_idx:end_idx] == gold_text:
-            answer['answer_end'] = end_idx
-        elif context[start_idx-1:end_idx-1] == gold_text:
-            answer['answer_start'] = start_idx - 1
-            answer['answer_end'] = end_idx - 1     # When the gold label is off by one character
-        elif context[start_idx-2:end_idx-2] == gold_text:
-            answer['answer_start'] = start_idx - 2
-            answer['answer_end'] = end_idx - 2     # When the gold label is off by two characters
 """
-
 # This function is taken from https://huggingface.co/docs/datasets/master/loading_datasets.html
 def add_token_positions(encodings, answers, tokenizer):
     start_positions = []
@@ -142,15 +122,27 @@ def add_token_positions(encodings, answers, tokenizer):
         if end_positions[-1] is None:
             end_positions[-1] = tokenizer.model_max_length
     encodings.update({'start_positions': start_positions, 'end_positions': end_positions})
+"""
 
 # Inherents from pytorch's Dataset module: https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset  
-# As done by: https://huggingface.co/transformers/custom_datasets.htmlclass Dataset(torch.utils.data.Dataset):
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, encodings):
+    def __init__(self, encodings, answers, tokenizer):
         self.encodings = encodings
+        self.answers = answers
+        self.tokenizer = tokenizer
+        start = [], end = []
+        for i in range(len(answers)):
+            start.append(encodings.char_to_token(i, answers[i]['answer_start']))
+            if start[-1] is None: start[-1] = tokenizer.model_max_length
+            end.append(encodings.char_to_token(i, answers[i]['answer_end'] - 1))
+            if end[-1] is None: end[-1] = tokenizer.model_max_length
+        self.start_positions = start
+        self.end_positions = end
 
     def __getitem__(self, idx):
-        return {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
+        data = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
+        data.update({'start_positions': self.start_positions, 'end_positions': self.end_positions})
+        return data
 
     def __len__(self):
         return len(self.encodings.input_ids)
@@ -170,14 +162,12 @@ def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20, verbo
         print(f'len(val_answers): {len(val_answers)}\n')
     
         print('now add_end_idx')
-    #add_end_idx(train_answers, train_contexts)
-    #add_end_idx(val_answers, val_contexts)
     
     train_encodings = tokenizer(train_contexts, train_questions, truncation=True, padding=True)
     val_encodings = tokenizer(val_contexts, val_questions, truncation=True, padding=True)
     
-    add_token_positions(train_encodings, train_answers, tokenizer)
-    add_token_positions(val_encodings, val_answers, tokenizer)
+    #add_token_positions(train_encodings, train_answers, tokenizer)
+    #add_token_positions(val_encodings, val_answers, tokenizer)
     
     if verbose==True: print('obtaining data')
     train_data = Dataset(train_encodings)
