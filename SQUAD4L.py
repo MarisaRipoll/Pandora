@@ -110,7 +110,7 @@ def data_reader(path, num_samples=-1, mode='train', verbose=False, verbose_limit
         return contexts, questions, answers, ids, answer_texts, negatives, titles
     else:
         print('ERROR: incorrect mode chosen!')
-
+"""
 # This function is taken from https://huggingface.co/docs/datasets/master/loading_datasets.html
 def add_end_idx(answers, contexts):
     for answer, context in zip(answers, contexts):
@@ -127,6 +127,7 @@ def add_end_idx(answers, contexts):
         elif context[start_idx-2:end_idx-2] == gold_text:
             answer['answer_start'] = start_idx - 2
             answer['answer_end'] = end_idx - 2     # When the gold label is off by two characters
+"""
 
 # This function is taken from https://huggingface.co/docs/datasets/master/loading_datasets.html
 def add_token_positions(encodings, answers, tokenizer):
@@ -144,6 +145,7 @@ def add_token_positions(encodings, answers, tokenizer):
 
 # Inherents from pytorch's Dataset module: https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset  
 # As done by: https://huggingface.co/transformers/custom_datasets.htmlclass Dataset(torch.utils.data.Dataset):
+class Dataset(torch.utils.data.Dataset):
     def __init__(self, encodings):
         self.encodings = encodings
 
