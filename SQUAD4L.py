@@ -108,28 +108,14 @@ def data_reader(path, num_samples=-1, mode='train', verbose=False, verbose_limit
     else:
         print('ERROR: incorrect mode chosen!')
 
-"""
-# This function is taken from https://huggingface.co/docs/datasets/master/loading_datasets.html
-def add_token_positions(encodings, answers, tokenizer):
-    start_positions = []
-    end_positions = []
-    for i in range(len(answers)):
-        start_positions.append(encodings.char_to_token(i, answers[i]['answer_start']))
-        end_positions.append(encodings.char_to_token(i, answers[i]['answer_end'] - 1))
-        # if None, the answer passage has been truncated
-        if start_positions[-1] is None:
-            start_positions[-1] = tokenizer.model_max_length
-        if end_positions[-1] is None:
-            end_positions[-1] = tokenizer.model_max_length
-    encodings.update({'start_positions': start_positions, 'end_positions': end_positions})
-"""
 
 # Inherits from pytorchs Dataset module: https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset  
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, encodings, answers, tokenizer):
         self.answers = answers
         self.tokenizer = tokenizer
-        start = [], end = []
+        start = []
+        end = []
         for i in range(len(answers)):
             start.append(encodings.char_to_token(i, answers[i]['answer_start']))
             end.append(encodings.char_to_token(i, answers[i]['answer_end'] - 1))
@@ -166,9 +152,6 @@ def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20, verbo
     
     train_encodings = tokenizer(train_contexts, train_questions, truncation=True, padding=True)
     val_encodings = tokenizer(val_contexts, val_questions, truncation=True, padding=True)
-    
-    #add_token_positions(train_encodings, train_answers, tokenizer)
-    #add_token_positions(val_encodings, val_answers, tokenizer)
     
     if verbose==True: print('obtaining data')
     train_data = Dataset(train_encodings, train_answers, tokenizer)
