@@ -124,24 +124,25 @@ def add_token_positions(encodings, answers, tokenizer):
     encodings.update({'start_positions': start_positions, 'end_positions': end_positions})
 """
 
-# Inherents from pytorch's Dataset module: https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset  
+# Inherits from pytorchs Dataset module: https://pytorch.org/docs/stable/data.html#torch.utils.data.Dataset  
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, encodings, answers, tokenizer):
-        self.encodings = encodings
         self.answers = answers
         self.tokenizer = tokenizer
         start = [], end = []
         for i in range(len(answers)):
             start.append(encodings.char_to_token(i, answers[i]['answer_start']))
-            if start[-1] is None: start[-1] = tokenizer.model_max_length
             end.append(encodings.char_to_token(i, answers[i]['answer_end'] - 1))
-            if end[-1] is None: end[-1] = tokenizer.model_max_length
-        self.start_positions = start
-        self.end_positions = end
+            none_checker(start)
+            none_checker(end)
+        encodings.update({'start_positions': start, 'end_positions': end})
+        self.encodings = encodings
+
+    def none_checker(list):
+        if list[-1] is None: list[-1] = self.tokenizer.model_max_length
 
     def __getitem__(self, idx):
         data = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-        data.update({'start_positions': self.start_positions, 'end_positions': self.end_positions})
         return data
 
     def __len__(self):
@@ -170,8 +171,8 @@ def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20, verbo
     #add_token_positions(val_encodings, val_answers, tokenizer)
     
     if verbose==True: print('obtaining data')
-    train_data = Dataset(train_encodings)
-    val_data = Dataset(val_encodings)
+    train_data = Dataset(train_encodings, train_answers, tokenizer)
+    val_data = Dataset(val_encodings, val_answers, tokenizer)
     train_percentage = num_samples_train/len(train_data)
     val_percentage = num_samples_val/len(val_data)
     
