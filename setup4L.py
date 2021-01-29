@@ -1,12 +1,7 @@
 import torch
-from torch.utils.data import DataLoader
-#from datasets.squad_v2 import squad
 from transformers import LongformerTokenizerFast, LongformerForQuestionAnswering, AdamW, Adafactor
-from transformers import Trainer, TrainingArguments
-from SQUAD4L import obtain_dataset
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 # SETUP
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
