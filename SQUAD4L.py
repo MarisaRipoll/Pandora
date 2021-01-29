@@ -158,18 +158,16 @@ def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20, verbo
         print(f'len(val_contexts): {len(val_contexts)}')
         print(f'len(val_answers): {len(val_answers)}\n')
     
-        print('now add_end_idx')
-    
     train_encodings = tokenizer(train_contexts, train_questions, truncation=True, padding=True)
     val_encodings = tokenizer(val_contexts, val_questions, truncation=True, padding=True)
     
-    if verbose==True: print('obtaining data')
+    if verbose==True: print('Passing inputs to the Dataset class')
     train_data = Dataset(train_encodings, train_answers, tokenizer)
     val_data = Dataset(val_encodings, val_answers, tokenizer)
+    
+    if verbose==True: print('Using sklearn split to return desired amount of data')
     train_percentage = num_samples_train/len(train_data)
     val_percentage = num_samples_val/len(val_data)
-    
-    if verbose==True: print('split dataset')
     train_dataset = train_data
     val_dataset = val_data
     
