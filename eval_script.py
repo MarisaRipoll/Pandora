@@ -58,23 +58,23 @@ def f1_metric(prediction, target):
     prediction = "".join(char for char in prediction if char not in set(string.punctuation))
     prediction = re.sub(re.compile(r"\b(a|an|the)\b", re.UNICODE), " ", prediction)
     prediction = " ".join(prediction.split())
-    prediction_tokens = prediction.split()
+    prediction_words = prediction.split()
 
     # Punctuation, case, space and article normalization    
     target = target.lower() 
     target = "".join(char for char in target if char not in set(string.punctuation))
     target = re.sub(re.compile(r"\b(a|an|the)\b", re.UNICODE), " ", target)
     target = " ".join(target.split())
-    target_tokens = target.split()
+    target_words = target.split()
 
-    if len(prediction_tokens) == 0 or len(target_tokens) == 0:
-        if prediction_tokens == target_tokens: return 1
+    if len(prediction_words) == 0 or len(target_words) == 0:
+        if prediction_words == target_words: return 1
         else: return 0
     
-    common_tokens = set(prediction_tokens) & set(target_tokens)
-    if len(common_tokens) == 0: return 0  # None of the tokens are shared between target and prediction --> f1=0
+    common_words = set(prediction_words) & set(target_words)
+    if len(common_words) == 0: return 0  # None of the words are shared between target and prediction --> f1=0
      
-    precision = len(common_tokens) / len(prediction_tokens)
-    recall = len(common_tokens) / len(target_tokens)
+    precision = len(common_words) / len(prediction_words)
+    recall = len(common_words) / len(target_words)
     f1_score = 2 * (precision * recall) / (precision + recall)
     return f1_score
