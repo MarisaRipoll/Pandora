@@ -32,7 +32,7 @@ def likeliest_predictions(start, end, input_ids, tokenizer, n=5):
     nbest.append(BestPrediction(text="", start_logit=start[0], end_logit=end[0])) # Include null answer.
     # compute the difference between the null score and the best non-null score
     score_diff = start[0] + end[0] - nbest[0].start_logit - nbest[0].end_logit
-    return score_diff, nbest
+    return nbest
 
 
 def em_metric(prediction, target):
