@@ -121,8 +121,8 @@ class Dataset(torch.utils.data.Dataset):
         start = []
         end = []
         for i in range(len(answers)):
-            start.append(encodings.char_to_token(i, answers[i]['answer_start']))
-            end.append(encodings.char_to_token(i, answers[i]['answer_end'] - 1))
+            start.append(data.char_to_token(i, answers[i]['answer_start']))
+            end.append(data.char_to_token(i, answers[i]['answer_end'] - 1))
             self.none_checker(start)
             self.none_checker(end)
         data.update({'start_positions': start, 'end_positions': end})
@@ -136,7 +136,7 @@ class Dataset(torch.utils.data.Dataset):
         return data
 
     def __len__(self):
-        return len(self.encodings.input_ids)
+        return len(self.data.input_ids)
     
 
 def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20, verbose=False,
@@ -179,7 +179,8 @@ def obtain_dataset(path1, path2, num_samples_train=80, num_samples_val=20, verbo
 def get_input_length(path):
 
     '''This function computes the length in characters of all context+question input samples.
-    It is a helper function for create_frequency_of_input_lengths_graph()
+    It is a helper function for create_frequency_of_input_lengths_graph(). It returns input 
+    lengths for the positive and the negative examples separately.
     
     Args:
             path (str): json file with data
@@ -187,7 +188,7 @@ def get_input_length(path):
     with open(path, 'rb') as f:
         squad_dict = json.load(f)
     positive_inputs = []
-    # negative_inputs = []
+    negative_inputs = []
     count = 0
     for group in squad_dict['data']:
         for passage in group['paragraphs']:
@@ -195,12 +196,13 @@ def get_input_length(path):
             len_context = len(context)
             for qa in passage['qas']:
                 len_question = len(qa['question'])
-                positive_inputs.append(len_context + len_question)
-                ####### TODO: negative examples - stack them in a bar chart with a separate color. 
-                #negative_inputs.append(len_context + len_question)
-                #for answer in qa['answers']:
-                #    inputs.append(len_context + len_question)
-    return positive_inputs    # , negative_inputs
+                for answer in qa['answers']:
+                    if answer['text'] == '':
+                        count += 1
+                        print('{0}: negative example detected'.format(count))
+                        negative_inputs.append(len_context + len_question)
+                    else: positive_inputs.append(len_context + len_question)
+    return positive_inputs, negative_inputs
 
 
 def create_frequency_of_input_lengths_graph(path, bar_region_size=200, fsize=(15, 8), show_max_length=False):
@@ -210,28 +212,38 @@ def create_frequency_of_input_lengths_graph(path, bar_region_size=200, fsize=(15
     Args:
             path (str): json file with data
     '''
-    inputs = get_input_length(path)
-    inputs = sorted(inputs)
+    positive_inputs, negative_inputs = get_input_length(path)
+    positive_inputs = sorted(positive_inputs)
+    negative_inputs = sorted(negative_inputs)
     if show_max_length==True:
-        print('The longest input character length is of: ', inputs[-1])
-        print('This corresponds to an average of {0} tokens'.format(inputs[-1]/4))
-    len_names = inputs[-2]//bar_region_size
-    if inputs[-2]%bar_region_size != 0: len_names += 1
+        print('The longest input character length is of: ', max(positive_inputs[-1], negative_inputs[-1]))
+        print('This corresponds to an average of {0} tokens'.format(max(positive_inputs[-1], negative_inputs[-1])/4))
+    len_names = max(positive_inputs[-2], negative_inputs[-2])//bar_region_size
+    if max(positive_inputs[-2], negative_inputs[-2])%bar_region_size != 0: len_names += 1
     names = [int(bar_region_size*i + bar_region_size/2) for i in range(len_names)]
-    samples_per_length = [0] * len(names)
+    positive_samples_per_length = [0] * len(names)
+    negative_samples_per_length = [0] * len(names)
     y_pos = np.arange(len(names))
 
-    for length in inputs:
+    for length in positive_inputs:
         for i in range(len(names)):
             if bar_region_size*i < length <= bar_region_size*i + bar_region_size:
-                samples_per_length[i] += 1
+                positive_samples_per_length[i] += 1
+
+    for length in negative_inputs:
+        for i in range(len(names)):
+            if bar_region_size*i < length <= bar_region_size*i + bar_region_size:
+                negative_samples_per_length[i] += 1
 
     plt.figure(figsize=fsize)
-    plt.bar(y_pos, samples_per_length, align='center', alpha=0.5)
+    p1 = plt.bar(y_pos, positive_samples_per_length, align='center', alpha=0.5)
+    p2 = plt.bar(y_pos, negative_samples_per_length, align='center', alpha=0.5)
+
     plt.xticks(y_pos, names, rotation=90)
     plt.ylabel('Frequency')
     plt.xlabel('Length of Input Characters (Context + Question)')
     plt.title('Frequency of Input Lengths for SQUADv2')
+    plt.legend((p1[0], p2[0]), ('Positive Samples', 'Negative_samples'))
 
     plt.show()
 
