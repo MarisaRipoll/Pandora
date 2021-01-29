@@ -185,6 +185,7 @@ def get_input_length(path):
     Args:
             path (str): json file with data
     '''
+
     with open(path, 'rb') as f:
         squad_dict = json.load(f)
     positive_inputs = []
@@ -196,16 +197,17 @@ def get_input_length(path):
             len_context = len(context)
             for qa in passage['qas']:
                 len_question = len(qa['question'])
-                for answer in qa['answers']:
-                    if answer['text'] == '':
-                        count += 1
-                        print('{0}: negative example detected'.format(count))
-                        negative_inputs.append(len_context + len_question)
-                    else: positive_inputs.append(len_context + len_question)
+                if bool(qa['answers']) == True:
+                  # Answer exists --> This is a positive example
+                  positive_inputs.append(len_context + len_question)
+                else:
+                  # Answer does not exist --> This is a negative example
+                  negative_inputs.append(len_context + len_question)
+                
     return positive_inputs, negative_inputs
 
 
-def create_frequency_of_input_lengths_graph(path, bar_region_size=200, fsize=(15, 8), show_max_length=False):
+def create_frequency_of_input_lengths_graph(path, title, bar_region_size=200, fsize=(15, 8), show_max_length=False):
     '''This function is used to create a graph showing the length frequency (in characters) for
     all context + question input samples in the given dataset.
     
@@ -216,6 +218,7 @@ def create_frequency_of_input_lengths_graph(path, bar_region_size=200, fsize=(15
     positive_inputs = sorted(positive_inputs)
     negative_inputs = sorted(negative_inputs)
     if show_max_length==True:
+        print('\n\n#####{0}#####\n'.format(title))
         print('The longest input character length is of: ', max(positive_inputs[-1], negative_inputs[-1]))
         print('This corresponds to an average of {0} tokens'.format(max(positive_inputs[-1], negative_inputs[-1])/4))
     len_names = max(positive_inputs[-2], negative_inputs[-2])//bar_region_size
@@ -242,7 +245,7 @@ def create_frequency_of_input_lengths_graph(path, bar_region_size=200, fsize=(15
     plt.xticks(y_pos, names, rotation=90)
     plt.ylabel('Frequency')
     plt.xlabel('Length of Input Characters (Context + Question)')
-    plt.title('Frequency of Input Lengths for SQUADv2')
+    plt.title(title)
     plt.legend((p1[0], p2[0]), ('Positive Samples', 'Negative_samples'))
 
     plt.show()
