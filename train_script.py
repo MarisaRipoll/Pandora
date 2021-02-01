@@ -15,6 +15,10 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, writer=0, 
     if model_type == 'distilbert' and tokenizer == 0: from setup import tokenizer
     if model_type == 'distilbert' and model == 0: from setup import model
 
+    if model_type == 'reformer' and device == 0: from setup4R import device
+    if model_type == 'reformer' and tokenizer == 0: from setup4R import tokenizer
+    if model_type == 'reformer' and model == 0: from setup4R import model
+
     if optim == 0: optim = AdamW(model.parameters(), lr=lr)
     summary_path = f'runs/{model_type}_{len(train_loader)}samples_{num_epochs}epochs_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
     if writer==0: writer = SummaryWriter(summary_path)
@@ -70,7 +74,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, writer=0, 
 
         # Append the averages of the whole epoch to metric lists for train and val.
         em_scores_val.append(sum(em_score_epoch_val)/len(em_score_epoch_val))
-        f1_scores_val.append(sum(f1_score_epoch_val)/len(f1_score_epoch_val))  
+        f1_scores_val.append(sum(f1_score_epoch_val)/len(f1_score_epoch_val))
         em_scores_train.append(sum(em_score_epoch_train)/len(em_score_epoch_train))
         f1_scores_train.append(sum(f1_score_epoch_train)/len(f1_score_epoch_train))
 
