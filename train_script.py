@@ -16,8 +16,8 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
     if model_type == 'distilbert' and model == 0: from setup import model
 
     if optim == 0: optim = AdamW(model.parameters(), lr=lr)
-    model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
-    writer = SummaryWriter(model_save_path)
+    summary_path = f'runs/{len(train_loader)}samples_{num_epochs}epochs_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
+    writer = SummaryWriter(summary_path)
 
     em_scores_train = []
     f1_scores_train = []
