@@ -16,7 +16,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
     if model_type == 'distilbert' and model == 0: from setup import model
 
     if optim == 0: optim = AdamW(model.parameters(), lr=lr)
-    summary_path = f'runs/{len(train_loader)}samples_{num_epochs}epochs_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
+    summary_path = f'runs/{model_type}_{len(train_loader)}samples_{num_epochs}epochs_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
     writer = SummaryWriter(summary_path)
 
     em_scores_train = []
@@ -41,13 +41,14 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
             # global_attention_mask = torch.zeros(input_ids.shape, dtype=torch.long, device=input_ids.device)
             # outputs = model(input_ids, attention_mask=attention_mask, global_attention_mask=global_attention_mask, output_attentions=True, start_positions=start_positions, end_positions=end_positions)
             optim.zero_grad()
-            loss, f1_score, em_score = get_scores(batch, em_score_epoch_val, f1_score_epoch_val)
+            loss, f1_score, em_score = get_scores(batch, em_score_epoch_val, f1_score_epoch_val,
+                                                  device, tokenizer, model)
             writer.add_scalar("Loss/train", loss, epoch)
             writer.add_scalar("f1_score/train", f1_score, epoch)
             writer.add_scalar("em_score/train", em_score, epoch)
             loss.backward()
             optim.step()
-            if i%10 == 0: print(f'TRAIN: Step {i} - loss: {loss:.3} - f1_score: {f1_score}')
+            if i%10 == 0: print(f'Step {i} - loss: {loss:.3} - f1_score: {f1_score:.3}')
             else: print(f'Step {i} - loss: {loss:.3}')
 
         model.eval()
@@ -58,11 +59,11 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
             ##### EVALUATION STEP #####
             ###########################
 
-            loss, f1_score, em_score = get_scores(batch, em_score_epoch_val, f1_score_epoch_val)
+            loss, f1_score, em_score = get_scores(batch, em_score_epoch_val, f1_score_epoch_val,
+                                                  device, tokenizer, model)
             writer.add_scalar("f1_score/val", f1_score, epoch)
             writer.add_scalar("em_score/val", em_score, epoch)
-            if i%10 == 0: print(f'EVAL: Step {i} - loss: {loss:.3} - f1_score: {f1_score}')
-            else: print(f'Step {i} - loss: {loss:.3}')
+            print(f'Step {i} - f1_score: {f1_score:.3}')
 
         writer.add_scalar("Loss/val", loss, epoch)
 
@@ -74,14 +75,14 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
 
     # Save model using variables as titles (including f1[-1])
     f1_score_train = f1_scores_train[-1]
-    model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{f1_score_train}f1_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
+    model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{f1_score_train:.3}f1_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
     torch.save(model, model_save_path)
     print(f'TRAINING DONE. MODEL SAVED (lr:{lr})\n\n')
 
     return em_scores_train, f1_scores_train, em_scores_val, f1_scores_val
 
 
-def get_scores(batch, em_score_epoch, f1_score_epoch):
+def get_scores(batch, em_score_epoch, f1_score_epoch, device, tokenizer, model):
     input_ids = batch['input_ids'].to(device)
     attention_mask = batch['attention_mask'].to(device)
     start_positions = batch['start_positions'].to(device)
