@@ -1,8 +1,7 @@
 # The eval and metric functions are heavily influenced by the code in: 
 # https://qa.fastforwardlabs.com/no%20answer/null%20threshold/bert/distilbert/exact%20match/f1/robust%20predictions/2020/06/09/Evaluating_BERT_on_SQuAD.html
 
-import collections
-
+import collections, string, re
 
 def likeliest_predictions(start, end, input_ids, tokenizer, n=5):
     start  = start.detach().cpu().tolist()[0] # covert to one dimensional list
