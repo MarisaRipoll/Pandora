@@ -6,7 +6,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 
-def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, model=0, device=0, tokenizer=0, num_epochs=10, n=5):
+def train(train_loader, val_loader, model_type='longformer', optim=0, writer=0, lr=5e-5, model=0, device=0, tokenizer=0, num_epochs=10, n=5):
     if model_type == 'longformer' and device == 0: from setup4L import device
     if model_type == 'longformer' and tokenizer == 0: from setup4L import tokenizer
     if model_type == 'longformer' and model == 0: from setup4L import model
@@ -17,7 +17,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
 
     if optim == 0: optim = AdamW(model.parameters(), lr=lr)
     summary_path = f'runs/{model_type}_{len(train_loader)}samples_{num_epochs}epochs_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
-    writer = SummaryWriter(summary_path)
+    if writer==0: writer = SummaryWriter(summary_path)
     model = model.to(device)
 
     em_scores_train = []
