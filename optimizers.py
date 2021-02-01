@@ -1,7 +1,7 @@
 from train_script import train
 from torch.utils.tensorboard import SummaryWriter
 from transformers import AdamW, Adafactor
-import torch.optim
+import torch.optim as optim
 
 
 ### HYPERPARAMETERS left to implement###
