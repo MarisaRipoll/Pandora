@@ -3,7 +3,19 @@ from eval_script import *
 from datetime import datetime
 
 
-def train(model, tokenizer, train_loader, device, optim, writer, num_epochs=10, n=5):
+def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, model=0, device=0, writer=0, tokenizer=0, num_epochs=10, n=5):
+    if model_type == 'longformer' and device == 0: from setup4L import device
+    if model_type == 'longformer' and tokenizer == 0: from setup4L import tokenizer
+    if model_type == 'longformer' and writer == 0: from setup4L import writer
+    if model_type == 'longformer' and model == 0: from setup4L import model
+
+    if model_type == 'distilbert' and device == 0: from setup import device
+    if model_type == 'distilbert' and tokenizer == 0: from setup import tokenizer
+    if model_type == 'distilbert' and writer == 0: from setup import writer
+    if model_type == 'distilbert' and model == 0: from setup import model
+
+    if optim == 0: optim = AdamW(model.parameters(), lr=lr) 
+
     em_scores_train = []
     f1_scores_train = []
     em_scores_val = []
@@ -15,6 +27,7 @@ def train(model, tokenizer, train_loader, device, optim, writer, num_epochs=10, 
         f1_score_epoch_val = []
 
         model.train()
+        print(f'Commencing TRAINING for Epoch{epoch}')
         for i, batch in enumerate(train_loader):
 
             #########################
@@ -48,6 +61,7 @@ def train(model, tokenizer, train_loader, device, optim, writer, num_epochs=10, 
             else: print(f'Step {i} - loss: {loss:.3}')
 
         model.eval()
+        print(f'Commencing EVALUATION for Epoch{epoch}')
         for i, batch in enumerate(val_loader):
 
             ###########################
@@ -81,8 +95,9 @@ def train(model, tokenizer, train_loader, device, optim, writer, num_epochs=10, 
 
     # Save model using variables as titles (including f1[-1])
     f1_score_train = f1_scores_train[-1]
-    model_save_path = 'models/{len(train_loader}samples_{num_epochs}epochs_{f1_score_train}f1_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
+    model_save_path = 'models/{len(train_loader}samples_{num_epochs}epochs_{f1_score_train}f1_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
     torch.save(model, model_save_path)
+    print(f'TRAINING DONE. MODEL SAVED (lr:{lr})\n\n')
 
     return em_scores_train, f1_scores_train, em_scores_val, f1_scores_val
 
