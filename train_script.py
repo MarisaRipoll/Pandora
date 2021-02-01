@@ -49,8 +49,8 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, writer=0, 
             writer.add_scalar("em_score/train", em_score, epoch)
             loss.backward()
             optim.step()
-            if (i+1)%10 == 0: print(f'Step {i+1} - loss: {float(loss):.3} - f1_score: {float(f1_score):.3}')
-            else: print(f'Step {i+1} - loss: {float(loss):.3}')
+            if (i+1)%30 == 0: print(f'Step {i+1} - loss: {float(loss):.3} - f1_score: {float(f1_score):.3}')
+            #else: print(f'Step {i+1} - loss: {float(loss):.3}')
 
         model.eval()
         print(f'Commencing EVALUATION for Epoch {epoch+1}/{num_epochs}')
@@ -64,7 +64,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, writer=0, 
                                                   device, tokenizer, model)
             writer.add_scalar("f1_score/val", f1_score, epoch)
             writer.add_scalar("em_score/val", em_score, epoch)
-            print(f'Step {i+1} - f1_score: {float(f1_score):.3}')
+            if (i+1)%30 == 0: print(f'Step {i+1} - f1_score: {float(f1_score):.3}')
 
         writer.add_scalar("Loss/val", loss, epoch)
 
