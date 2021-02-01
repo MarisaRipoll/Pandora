@@ -78,7 +78,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, writer=0, 
     f1_score_train = f1_scores_train[-1]
     model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{float(f1_score_train):.3}f1_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
     torch.save(model, model_save_path)
-    print(f'TRAINING DONE. MODEL SAVED (lr:{lr})\n\n')
+    print(f'TRAINING DONE. MODEL SAVED\n\n')
 
     return em_scores_train, f1_scores_train, em_scores_val, f1_scores_val
 
