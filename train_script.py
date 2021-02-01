@@ -42,7 +42,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
             # global_attention_mask = torch.zeros(input_ids.shape, dtype=torch.long, device=input_ids.device)
             # outputs = model(input_ids, attention_mask=attention_mask, global_attention_mask=global_attention_mask, output_attentions=True, start_positions=start_positions, end_positions=end_positions)
             optim.zero_grad()
-            loss, f1_score, em_score = get_scores(batch, em_score_epoch_val, f1_score_epoch_val,
+            loss, f1_score, em_score = get_scores(batch, em_score_epoch_train, f1_score_epoch_train,
                                                   device, tokenizer, model)
             writer.add_scalar("Loss/train", loss, epoch)
             writer.add_scalar("f1_score/train", f1_score, epoch)
