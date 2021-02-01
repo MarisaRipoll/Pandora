@@ -2,6 +2,8 @@ import pprint, torch
 from eval_script import *
 from datetime import datetime
 from transformers import AdamW
+from torch.utils.tensorboard import SummaryWriter
+
 
 
 def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, model=0, device=0, tokenizer=0, num_epochs=10, n=5):
@@ -14,7 +16,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
     if model_type == 'distilbert' and model == 0: from setup import model
 
     if optim == 0: optim = AdamW(model.parameters(), lr=lr)
-    model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{f1_score_train}f1_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
+    model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
     writer = SummaryWriter(model_save_path)
 
     em_scores_train = []
