@@ -1,5 +1,5 @@
 import torch
-from transformers import ReformerTokenizer, ReformerForQuestionAnswering
+from transformers import ReformerTokenizer, ReformerForQuestionAnswering, AdamW
 import torch
 from datetime import datetime
 
