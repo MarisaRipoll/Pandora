@@ -4,18 +4,18 @@ from datetime import datetime
 from transformers import AdamW
 
 
-def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, model=0, device=0, writer=0, tokenizer=0, num_epochs=10, n=5):
+def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, model=0, device=0, tokenizer=0, num_epochs=10, n=5):
     if model_type == 'longformer' and device == 0: from setup4L import device
     if model_type == 'longformer' and tokenizer == 0: from setup4L import tokenizer
-    if model_type == 'longformer' and writer == 0: from setup4L import writer
     if model_type == 'longformer' and model == 0: from setup4L import model
 
     if model_type == 'distilbert' and device == 0: from setup import device
     if model_type == 'distilbert' and tokenizer == 0: from setup import tokenizer
-    if model_type == 'distilbert' and writer == 0: from setup import writer
     if model_type == 'distilbert' and model == 0: from setup import model
 
-    if optim == 0: optim = AdamW(model.parameters(), lr=lr) 
+    if optim == 0: optim = AdamW(model.parameters(), lr=lr)
+    model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{f1_score_train}f1_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
+    writer = SummaryWriter(model_save_path)
 
     em_scores_train = []
     f1_scores_train = []
@@ -28,7 +28,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
         f1_score_epoch_val = []
 
         model.train()
-        print(f'Commencing TRAINING for Epoch{epoch}')
+        print(f'Commencing TRAINING for Epoch{epoch+1}/{num_epochs}')
         for i, batch in enumerate(train_loader):
 
             #########################
@@ -62,7 +62,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
             else: print(f'Step {i} - loss: {loss:.3}')
 
         model.eval()
-        print(f'Commencing EVALUATION for Epoch{epoch}')
+        print(f'Commencing EVALUATION for Epoch {epoch+1}/{num_epochs}')
         for i, batch in enumerate(val_loader):
 
             ###########################
@@ -96,7 +96,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
 
     # Save model using variables as titles (including f1[-1])
     f1_score_train = f1_scores_train[-1]
-    model_save_path = 'models/{len(train_loader}samples_{num_epochs}epochs_{f1_score_train}f1_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
+    model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{f1_score_train}f1_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
     torch.save(model, model_save_path)
     print(f'TRAINING DONE. MODEL SAVED (lr:{lr})\n\n')
 
