@@ -49,8 +49,8 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
             writer.add_scalar("em_score/train", em_score, epoch)
             loss.backward()
             optim.step()
-            if i%10 == 0: print(f'Step {i} - loss: {loss:.3} - f1_score: {f1_score:.3}')
-            else: print(f'Step {i} - loss: {loss:.3}')
+            if i%10 == 0: print(f'Step {i} - loss: {float(loss):.3} - f1_score: {float(f1_score):.3}')
+            else: print(f'Step {i} - loss: {float(loss):.3}')
 
         model.eval()
         print(f'Commencing EVALUATION for Epoch {epoch+1}/{num_epochs}')
@@ -64,7 +64,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
                                                   device, tokenizer, model)
             writer.add_scalar("f1_score/val", f1_score, epoch)
             writer.add_scalar("em_score/val", em_score, epoch)
-            print(f'Step {i} - f1_score: {f1_score:.3}')
+            print(f'Step {i} - f1_score: {float(f1_score):.3}')
 
         writer.add_scalar("Loss/val", loss, epoch)
 
@@ -76,7 +76,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, m
 
     # Save model using variables as titles (including f1[-1])
     f1_score_train = f1_scores_train[-1]
-    model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{f1_score_train:.3}f1_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
+    model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{float(f1_score_train):.3}f1_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
     torch.save(model, model_save_path)
     print(f'TRAINING DONE. MODEL SAVED (lr:{lr})\n\n')
 
