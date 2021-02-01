@@ -1,6 +1,7 @@
 import pprint, torch
 from eval_script import *
 from datetime import datetime
+from transformers import AdamW
 
 
 def train(train_loader, val_loader, model_type='longformer', optim=0, lr=5e-5, model=0, device=0, writer=0, tokenizer=0, num_epochs=10, n=5):
