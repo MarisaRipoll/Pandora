@@ -21,7 +21,7 @@ def train_different_windows_local(train_loader, val_loader, optim=0, writer=0, l
             model.train()
             model = model.to(device)
             train(train_loader, val_loader, optim=optim, writer=writer, lr=lr, 
-                  model=model, device=device, tokenizer=tokenizer, num_epochs=num_epochs)
+                  model=model, device=device, tokenizer=tokenizer, num_epochs=num_epochs, summary_path='local_attention_of_window_{attention}')
     if attention_per_layer!=0:
         if writer==0: writer=SummaryWriter('runs/local_attention_varied_by_layer')
         configuration = model.config
@@ -29,5 +29,5 @@ def train_different_windows_local(train_loader, val_loader, optim=0, writer=0, l
         model.train()
         model = model.to(device)
         train(train_loader, val_loader, optim=optim, writer=writer, lr=lr, 
-              model=model, device=device, tokenizer=tokenizer, num_epochs=num_epochs)
+              model=model, device=device, tokenizer=tokenizer, num_epochs=num_epochs, summary_path='local_attention_varied_by_layer')
     

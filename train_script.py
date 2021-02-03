@@ -6,7 +6,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 
-def train(train_loader, val_loader, model_type='longformer', optim=0, writer=0, lr=5e-5, model=0, device=0, tokenizer=0, num_epochs=10, n=5):
+def train(train_loader, val_loader, model_type='longformer', optim=0, writer=0, lr=5e-5, model=0, device=0, tokenizer=0, num_epochs=10, n=5, summary_path=0):
     if model_type == 'longformer' and device == 0: from setup4L import device
     if model_type == 'longformer' and tokenizer == 0: from setup4L import tokenizer
     if model_type == 'longformer' and model == 0: from setup4L import model
@@ -20,7 +20,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, writer=0, 
     if model_type == 'reformer' and model == 0: from setup4R import model
 
     if optim == 0: optim = AdamW(model.parameters(), lr=lr)
-    summary_path = f'runs/{model_type}_{len(train_loader)}samples_{num_epochs}epochs_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
+    if summary_path==0: summary_path = f'runs/{model_type}_{len(train_loader)}samples_{num_epochs}epochs_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
     if writer==0: writer = SummaryWriter(summary_path)
     model = model.to(device)
 
@@ -81,7 +81,8 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, writer=0, 
     # Save model using variables as titles (including f1[-1])
     f1_score_train = f1_scores_train[-1]
     model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{float(f1_score_train):.3}f1_{lr}lr_{datetime.now().strftime("%b-%d-%Y-%H%M%S")}'
-    torch.save(model, writer)
+    summary_path=f'{summary_path}_{f1_score}f1'
+    torch.save(model, summary_path)
     print(f'TRAINING DONE. MODEL SAVED\n\n')
 
     return em_scores_train, f1_scores_train, em_scores_val, f1_scores_val
