@@ -14,7 +14,7 @@ def train_different_windows_local(train_loader, val_loader, optim=0, writer=0, l
     if optim == 0: optim = optimizer_type.RMSprop(model.parameters(), lr=lr, eps=eps, centered=False)
     if attention_per_layer!=0 and attentions_list!=0: print('WARNING: YOU ARE USING attentions_list AND attention_per_layer. CHOOSE ONE.')
     if attentions_list!=0:
-        for attention in attentions:
+        for attention in attentions_list:
             if writer==0: writer=SummaryWriter('local_attention_of_window_{attention}')
             configuration = model.config
             configuration.attention_window = attention
