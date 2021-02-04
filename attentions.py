@@ -15,13 +15,14 @@ def train_different_windows_local(train_loader, val_loader, optim=0, writer=0, l
     if attention_per_layer!=0 and attentions_list!=0: print('WARNING: YOU ARE USING attentions_list AND attention_per_layer. CHOOSE ONE.')
     if attentions_list!=0:
         for attention in attentions_list:
-            if writer==0: writer=SummaryWriter(f'runs/local_attention_of_window_{attention}')
+            summary_path = f'runs/local_attention_of_window_{attention}'
+            if writer==0: writer=SummaryWriter(summary_path)
             configuration = model.config
             configuration.attention_window = attention
             model.train()
             model = model.to(device)
             train(train_loader, val_loader, optim=optim, writer=writer, lr=lr, 
-                  model=model, device=device, tokenizer=tokenizer, num_epochs=num_epochs, summary_path='local_attention_of_window_{attention}')
+                  model=model, device=device, tokenizer=tokenizer, num_epochs=num_epochs, summary_path=summary_path)
     if attention_per_layer!=0:
         if writer==0: writer=SummaryWriter('runs/local_attention_varied_by_layer')
         configuration = model.config
