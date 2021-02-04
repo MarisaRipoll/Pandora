@@ -16,11 +16,9 @@ def likeliest_predictions(start, end, input_ids, tokenizer, n=5):
     prelim_preds = []
     nbest = []
     seen_preds = []
-    question_indices = [i+1 for i, token in enumerate(inputs[1:inputs.index(2)])]
     for start_index in start_idx:
         for end_index in end_idx:
             if end_index < start_index: continue
-            if start_index in question_indices: continue
             prelim_preds.append(PrelimPrediction(start_idx = start_index, end_idx = end_index,
                                                  start_logit = start[start_index], end_logit = end[end_index]))
     prelim_preds = sorted(prelim_preds, key=lambda x: (x.start_logit + x.end_logit), reverse=True)
