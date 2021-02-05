@@ -81,7 +81,7 @@ def train(train_loader, val_loader, model_type='longformer', optim=0, writer=0, 
     # Save model using variables as titles (including f1[-1])
     f1_score_train = f1_scores_train[-1]
     model_save_path = f'models/{len(train_loader)}samples_{num_epochs}epochs_{float(f1_score_train):.3}f1'
-    summary_path=f'models/{summary_path}_{f1_score_train}f1'
+    summary_path=f'{summary_path}_{f1_score_train}f1'
     torch.save(model, summary_path)
     print(f'TRAINING DONE. MODEL SAVED\n\n')
 
