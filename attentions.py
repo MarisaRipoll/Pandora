@@ -45,13 +45,13 @@ def train_local_vs_global(train_loader, val_loader, optim=0, writer=0, lr=0.005,
     model.train()
     model = model.to(device)
     train(train_loader, val_loader, optim=optim, writer=writerlocal, lr=lr, model=model, device=device,
-          tokenizer=tokenizer, num_epochs=num_epochs, summary_path=summary_path, local_only=True)
+          tokenizer=tokenizer, num_epochs=num_epochs, summary_path=summary_path_local, local_only=True)
 
     ## Second Global attention:
-    summary_path_local = f'runs/{num_epochs}epochs_{len(train_loader)}samples_GLOBAL'
-    if writer==0: writerlocal=SummaryWriter(summary_path_global)
+    summary_path_global = f'runs/{num_epochs}epochs_{len(train_loader)}samples_GLOBAL'
+    if writer==0: writerglobal=SummaryWriter(summary_path_global)
     else: writerglobal = writer
     model.train()
     model = model.to(device)
     train(train_loader, val_loader, optim=optim, writer=writerglobal, lr=lr, model=model, device=device,
-          tokenizer=tokenizer, num_epochs=num_epochs, summary_path=summary_path, global_only=True)
+          tokenizer=tokenizer, num_epochs=num_epochs, summary_path=summary_path_global, global_only=True)
