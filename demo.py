@@ -1,14 +1,11 @@
 import torch
-from transformers import DistilBertTokenizerFast, DistilBertForQuestionAnswering, AdamW, Adafactor 
-from datetime import datetime
-from torch.utils.tensorboard import SummaryWriter
+from transformers import LongformerTokenizerFast, LongformerForQuestionAnswering
 
-model_default = LongformerForQuestionAnswering.from_pretrained('allenai/longformer-base-4096')
 tokenizer = LongformerTokenizerFast.from_pretrained('allenai/longformer-base-4096')
 
 def one_dimensional_attention_representation(text, question, model=0):
     # If model is not specified default to longformer checkpoint
-    if model == 0: model = model_default
+    if model == 0: model = LongformerForQuestionAnswering.from_pretrained('allenai/longformer-base-4096')
     encoding = tokenizer(question, text, return_tensors="pt")
     input_ids = encoding["input_ids"]
     tokens = input_ids.detach().cpu().tolist()[0]
